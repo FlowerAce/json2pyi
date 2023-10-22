@@ -43,12 +43,8 @@ impl InferrerClosure {
 
     fn rinfer(&mut self, json: &PropertyInstance, outer_name: Option<String>) -> ArenaIndex {
         match json {
-            PropertyInstance::Integer { criteria: _ } => {
-                self.arena.get_index_of_primitive(Type::Int)
-            }
-            PropertyInstance::Number { criteria: _ } => {
-                self.arena.get_index_of_primitive(Type::Float)
-            }
+            PropertyInstance::Integer { .. } => self.arena.get_index_of_primitive(Type::Int),
+            PropertyInstance::Number { .. } => self.arena.get_index_of_primitive(Type::Float),
             PropertyInstance::Boolean => self.arena.get_index_of_primitive(Type::Bool),
             PropertyInstance::String => self.arena.get_index_of_primitive(Type::String),
             PropertyInstance::Null => self.arena.get_index_of_primitive(Type::Null),
@@ -57,10 +53,7 @@ impl InferrerClosure {
                 let array_type = Type::Array(value_type);
                 self.arena.insert(array_type)
             }
-            PropertyInstance::Object {
-                properties,
-                required: _,
-            } => {
+            PropertyInstance::Object { properties, .. } => {
                 let mut fields = IndexMap::new();
                 for (key, value) in properties.iter() {
                     let v = match value {
