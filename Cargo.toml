@@ -21,7 +21,7 @@ iso8601 = "0.5"
 itertools = "0.10"
 serde = "1.0"
 serde_json = {version = "1.0", features = ["preserve_order"]}
-serde-json-schema = { git = "https://github.com/FlowerAce/serde-json-schema.git", rev= "df6274c7cef9273a97faa26cbe6ecb3ada1d891a" }
+serde-json-schema = { git = "https://github.com/FlowerAce/serde-json-schema.git", rev= "d27c55434534bedd7b3e907217fff57d1200e547" }
 thiserror = "1.0.49"
 anyhow = "1.0.75"
 typetag = "0.2"

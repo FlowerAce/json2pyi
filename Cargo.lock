@@ -333,7 +333,7 @@ dependencies = [
 [[package]]
 name = "serde-json-schema"
 version = "0.1.0"
-source = "git+https://github.com/FlowerAce/serde-json-schema.git?rev=df6274c7cef9273a97faa26cbe6ecb3ada1d891a#df6274c7cef9273a97faa26cbe6ecb3ada1d891a"
+source = "git+https://github.com/FlowerAce/serde-json-schema.git?rev=d27c55434534bedd7b3e907217fff57d1200e547#d27c55434534bedd7b3e907217fff57d1200e547"
 dependencies = [
  "json-pointer",
  "serde",

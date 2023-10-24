@@ -35,13 +35,18 @@ impl InferrerClosure {
 
     fn run(mut self, schema: &JSONSchema, root_name: Option<String>) -> Result<Schema> {
         let json = schema.specification().ok_or(JSONSchemaError::Empty)?;
-        let root = self.rinfer(&json, root_name);
+        let root = self.rinfer(&json, root_name, schema);
 
         let arena = self.arena;
         Ok(Schema { arena, root })
     }
 
-    fn rinfer(&mut self, json: &PropertyInstance, outer_name: Option<String>) -> ArenaIndex {
+    fn rinfer(
+        &mut self,
+        json: &PropertyInstance,
+        outer_name: Option<String>,
+        schema: &JSONSchema,
+    ) -> ArenaIndex {
         match json {
             PropertyInstance::Integer { .. } => self.arena.get_index_of_primitive(Type::Int),
             PropertyInstance::Number { .. } => self.arena.get_index_of_primitive(Type::Float),
@@ -49,7 +54,7 @@ impl InferrerClosure {
             PropertyInstance::String => self.arena.get_index_of_primitive(Type::String),
             PropertyInstance::Null => self.arena.get_index_of_primitive(Type::Null),
             PropertyInstance::Array { ref items } => {
-                let value_type = self.rinfer(&items, None);
+                let value_type = self.rinfer(&items, None, schema);
                 let array_type = Type::Array(value_type);
                 self.arena.insert(array_type)
             }
@@ -58,9 +63,12 @@ impl InferrerClosure {
                 for (key, value) in properties.iter() {
                     let v = match value {
                         Property::Value(t) => t,
-                        Property::Ref(_) => todo!(),
+                        Property::Ref(r) => r.deref(schema).unwrap(),
                     };
-                    fields.insert(key.to_owned(), self.rinfer(v, Some(key.to_pascal_case())));
+                    fields.insert(
+                        key.to_owned(),
+                        self.rinfer(v, Some(key.to_pascal_case()), schema),
+                    );
                 }
                 let mut name_hints = NameHints::new();
                 if let Some(outer_name) = outer_name {
