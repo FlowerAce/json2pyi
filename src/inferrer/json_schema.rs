@@ -53,8 +53,9 @@ impl InferrerClosure {
             PropertyInstance::Boolean => self.arena.get_index_of_primitive(Type::Bool),
             PropertyInstance::String => self.arena.get_index_of_primitive(Type::String),
             PropertyInstance::Null => self.arena.get_index_of_primitive(Type::Null),
-            PropertyInstance::Array { ref items } => {
-                let value_type = self.rinfer(&items, None, schema);
+            PropertyInstance::Array { items } => {
+                let items = items.as_ref();
+                let value_type = self.rinfer(items, None, schema);
                 let array_type = Type::Array(value_type);
                 self.arena.insert(array_type)
             }
@@ -76,6 +77,7 @@ impl InferrerClosure {
                 }
                 self.arena.insert(Type::Map(Map { name_hints, fields }))
             }
+            PropertyInstance::Empty(_) => self.arena.get_index_of_primitive(Type::Any),
         }
     }
 }
