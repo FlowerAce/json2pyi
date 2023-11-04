@@ -55,7 +55,7 @@ impl InferrerClosure {
             PropertyInstance::Null => self.arena.get_index_of_primitive(Type::Null),
             PropertyInstance::Array { items } => {
                 let items = items.as_ref();
-                let value_type = self.rinfer(items, None, schema);
+                let value_type = self.rinfer(items, outer_name, schema);
                 let array_type = Type::Array(value_type);
                 self.arena.insert(array_type)
             }
