@@ -18,7 +18,12 @@ fn main() -> Result<()> {
     io::stdin().read_to_string(&mut buffer)?;
     let root_name = Some(args[1].to_owned());
     let json = Schema::try_from(buffer.to_owned())?;
-    let mut schema = infer_from_json_schema(&json, root_name)?;
+    let schema = infer_from_json_schema(&json, root_name)?;
+    generate(schema);
+    Ok(())
+}
+
+fn generate(mut schema: PySchema) {
     Optimizer {
         to_merge_similar_datatypes: true,
         to_merge_same_unions: true,
@@ -40,5 +45,4 @@ fn main() -> Result<()> {
         .filter(|s| !s.is_empty())
         .join("\n");
     println!("{}", out);
-    Ok(())
 }
