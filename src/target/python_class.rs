@@ -75,6 +75,7 @@ fn write_output(
     };
 
     let mut imports_from_typing = HashSet::new();
+    let mut imports_from_typing_extensions = HashSet::new();
     let mut importing_base_class_or_class_decorators = false;
     let mut importing_datetime = false;
     let mut importing_uuid = false;
@@ -137,7 +138,7 @@ fn write_output(
                     // So we use NotRequired for TypedDict and Missing otherwise.
                     //
                     // `NotRequired[]` is invalid. So a single `Missing` is used instead.
-                    imports_from_typing.insert(
+                    imports_from_typing_extensions.insert(
                         if options.kind == Kind::TypedDict || types.len() > 1 {
                             "NotRequired"
                         } else {
@@ -178,7 +179,8 @@ fn write_output(
             writeln!(additional, "# 💡 Starting from Python 3.10 (PEP 604), `Union[A, B]` can be simplified as `A | B`
 ")?;
         }
-        let typing_mod = if ["NotRequired", "Missing"]
+
+        if ["NotRequired", "Missing"]
             .iter()
             .any(|&t| imports_from_typing.contains(t))
         {
@@ -190,14 +192,17 @@ fn write_output(
 #    For Python < 3.11, pip install typing_extensions. O.W., just change it to `typing`
 "#
             )?;
-            "typing_extensions"
-        } else {
-            "typing"
         };
 
-        write!(header, "from {} import ", typing_mod)?;
+        write!(header, "from typing import ")?;
         Itertools::intersperse(imports_from_typing.into_iter(), ", ")
             .try_for_each(|e| write!(header, "{}", e))?;
+        if !imports_from_typing_extensions.is_empty() {
+            writeln!(header)?;
+            write!(header, "from typing_extensions import ")?;
+            Itertools::intersperse(imports_from_typing_extensions.into_iter(), ", ")
+                .try_for_each(|e| write!(header, "{}", e))?;
+        }
         writeln!(header)?;
     }
     if importing_datetime {
