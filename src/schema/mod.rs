@@ -41,6 +41,12 @@ pub enum Type {
     Any,
 }
 
+impl Default for &Type {
+    fn default() -> Self {
+        &Type::Any
+    }
+}
+
 pub struct TopdownIter<'a> {
     arena: &'a TypeArena,
     stack: Vec<ArenaIndex>,
