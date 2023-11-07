@@ -1,11 +1,12 @@
 pub use generational_arena::{Arena, Index as ArenaIndex};
 // pub type Arena<Type> = Arena<Type>;
-use bidirectional_map::Bimap;
+use bimap::BiBTreeMap as Bimap;
 use disjoint_sets::UnionFind;
 use itertools::Itertools;
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet},
+    iter::FromIterator,
     ops::{Deref, DerefMut},
 };
 
@@ -47,22 +48,17 @@ impl TypeArena {
     pub fn find_disjoint_sets<F>(
         &self,
         should_union_fn: F,
-    ) -> HashMap<ArenaIndex, HashSet<ArenaIndex>>
+    ) -> BTreeMap<ArenaIndex, BTreeSet<ArenaIndex>>
     where
         F: Fn(&Type, &Type) -> bool,
     {
         // The map between ArenaIndex and its index of type usize in the DSU
-        let imap: Bimap<usize, ArenaIndex> = Bimap::from_hash_map(
-            self.arena
-                .iter()
-                .map(|(index, _)| index)
-                .enumerate()
-                .collect(),
-        );
+        let imap: Bimap<usize, ArenaIndex> =
+            Bimap::from_iter(self.arena.iter().map(|(index, _)| index).enumerate());
         // Disjoint set union
         let mut dsu = UnionFind::<usize>::new(imap.len());
         {
-            let iter1 = imap.fwd().iter().map(|(&a, &b)| (a, b));
+            let iter1 = imap.iter().map(|(&a, &b)| (a, b));
             let iter2 = iter1.clone();
             iter1.cartesian_product(iter2)
         }
@@ -84,11 +80,11 @@ impl TypeArena {
 
         // Result sets
         // TODO: Or just return HashSet here?
-        let mut disjoint_sets = HashMap::<ArenaIndex, HashSet<ArenaIndex>>::new();
+        let mut disjoint_sets = BTreeMap::<ArenaIndex, BTreeSet<ArenaIndex>>::new();
         for (arni, _type) in self.arena.iter() {
             let r = imap
-                .get_rev(&arni)
-                .and_then(|&dsui| imap.get_fwd(&dsu.find(dsui)))
+                .get_by_right(&arni)
+                .and_then(|&dsui| imap.get_by_left(&dsu.find(dsui)))
                 .cloned()
                 .unwrap();
             disjoint_sets.entry(r).or_default().insert(arni);

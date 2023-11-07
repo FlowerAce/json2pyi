@@ -1,8 +1,9 @@
-use bidirectional_map::Bimap;
+use bimap::BiBTreeMap as Bimap;
 use disjoint_sets::UnionFind;
 
 use std::{
     collections::HashSet,
+    iter::FromIterator,
     mem,
     ops::{Deref, DerefMut, Drop},
 };
@@ -121,7 +122,7 @@ pub struct TypeArenaWithDSU<'a> {
 impl<'a> TypeArenaWithDSU<'a> {
     fn from_type_arena(arena: &'a mut TypeArena) -> Self {
         let imap: Bimap<usize, ArenaIndex> =
-            Bimap::from_hash_map(arena.iter().map(|(index, _)| index).enumerate().collect());
+            Bimap::from_iter(arena.iter().map(|(index, _)| index).enumerate());
 
         let dsu = UnionFind::<usize>::new(imap.len());
         TypeArenaWithDSU { arena, dsu, imap }
@@ -131,8 +132,8 @@ impl<'a> TypeArenaWithDSU<'a> {
     /// which `arni` belongs
     fn find_representative(&self, arni: ArenaIndex) -> Option<ArenaIndex> {
         self.imap
-            .get_rev(&arni)
-            .and_then(|&dsui| self.imap.get_fwd(&self.dsu.find(dsui)))
+            .get_by_right(&arni)
+            .and_then(|&dsui| self.imap.get_by_left(&self.dsu.find(dsui)))
             .cloned()
     }
 
@@ -242,8 +243,8 @@ impl<'a> ITypeArena for TypeArenaWithDSU<'a> {
     /// Remove the type denoted by the index i and union i into j in the DSU
     fn remove_in_favor_of(&mut self, i: ArenaIndex, j: ArenaIndex) -> Option<Type> {
         self.dsu.union(
-            *self.imap.get_rev(&i).unwrap(),
-            *self.imap.get_rev(&j).unwrap(),
+            *self.imap.get_by_right(&i).unwrap(),
+            *self.imap.get_by_right(&j).unwrap(),
         );
         DerefMut::deref_mut(self).remove(i)
     }

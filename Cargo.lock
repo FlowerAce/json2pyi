@@ -34,10 +34,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "bidirectional-map"
-version = "0.1.4"
+name = "bimap"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac66a889db5ab98510dff09cd3a92a23653c7d3371f425788e60f651f9184346"
+checksum = "230c5f1ca6a325a32553f8640d31ac9b49f2411e901e427570154868b46da4f7"
 
 [[package]]
 name = "bumpalo"
@@ -199,7 +199,7 @@ version = "0.1.0"
 dependencies = [
  "Inflector",
  "anyhow",
- "bidirectional-map",
+ "bimap",
  "console_error_panic_hook",
  "disjoint-sets",
  "generational-arena",
@@ -339,7 +339,7 @@ dependencies = [
 [[package]]
 name = "serde-json-schema"
 version = "0.1.1"
-source = "git+https://github.com/FlowerAce/serde-json-schema.git?rev=8364f0245f49c38b89ed126aac16024b6d2ab69a#8364f0245f49c38b89ed126aac16024b6d2ab69a"
+source = "git+https://github.com/FlowerAce/serde-json-schema.git?rev=36fc0d17ccda32613cc5c8ccdd2eee4e645ffdca#36fc0d17ccda32613cc5c8ccdd2eee4e645ffdca"
 dependencies = [
  "json-pointer",
  "serde",
