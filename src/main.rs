@@ -25,8 +25,9 @@ fn main() -> Result<()> {
 
 fn generate(mut schema: PySchema) {
     Optimizer {
-        to_merge_similar_datatypes: true,
-        to_merge_same_unions: true,
+        to_merge_similar_datatypes: false,
+        to_merge_name_datatypes: true,
+        to_merge_same_unions: false,
     }
     .optimize(&mut schema);
     let target = &PythonClass {

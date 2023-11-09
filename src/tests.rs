@@ -17,6 +17,7 @@ fn test_quicktype() {
     dbg!(&schema);
     Optimizer {
         to_merge_similar_datatypes: true,
+        to_merge_name_datatypes: false,
         to_merge_same_unions: true,
     }
     .optimize(&mut schema);
@@ -41,6 +42,7 @@ fn test_githubstatus() {
     let mut schema = infer_from_json(&v, None);
     Optimizer {
         to_merge_similar_datatypes: true,
+        to_merge_name_datatypes: false,
         to_merge_same_unions: true,
     }
     .optimize(&mut schema);
@@ -60,6 +62,7 @@ fn test_tree_recursion() {
     let mut schema = infer_from_json(&v, None);
     Optimizer {
         to_merge_similar_datatypes: true,
+        to_merge_name_datatypes: false,
         to_merge_same_unions: true,
     }
     .optimize(&mut schema);

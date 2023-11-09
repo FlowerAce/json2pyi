@@ -14,6 +14,7 @@ use crate::schema::{ArenaIndex, ITypeArena, Schema, Type, TypeArena};
 /// A optimizer that merge similar `Map`s and/or same `Union`s as configured
 pub struct Optimizer {
     pub to_merge_similar_datatypes: bool,
+    pub to_merge_name_datatypes: bool,
     pub to_merge_same_unions: bool,
 }
 
@@ -21,6 +22,7 @@ impl Optimizer {
     pub fn new_default() -> Optimizer {
         Optimizer {
             to_merge_similar_datatypes: true,
+            to_merge_name_datatypes: false,
             to_merge_same_unions: true,
         }
     }
@@ -31,7 +33,16 @@ impl Optimizer {
         // For simplicity, just take the first way.
         let sets = schema.arena.find_disjoint_sets(|a, b| {
             if let (Some(a), Some(b)) = (a.as_map(), b.as_map()) {
-                self.to_merge_similar_datatypes && a.is_similar_to(b)
+                if self.to_merge_similar_datatypes {
+                    return a.is_similar_to(b);
+                }
+                if !self.to_merge_name_datatypes {
+                    return false;
+                }
+                if a.name_hints.len() < 1 || b.name_hints.len() < 1 {
+                    return false;
+                }
+                a.name_hints[0] == b.name_hints[0]
             } else if let (Some(a), Some(b)) = (a.as_union(), b.as_union()) {
                 self.to_merge_same_unions && (a.types == b.types)
             } else {
@@ -43,6 +54,7 @@ impl Optimizer {
         for (leader, mut set) in sets.into_iter() {
             if ufarena.get(leader).map(|r#type| {
                 (self.to_merge_similar_datatypes && r#type.is_map())
+                    || (self.to_merge_name_datatypes && r#type.is_map())
                     || (self.to_merge_same_unions && r#type.is_union())
             }) == Some(true)
             {
