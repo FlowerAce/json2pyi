@@ -1,5 +1,5 @@
 [package]
-authors = ["Hung-I Wang <whygowe@gmail.com>"]
+authors = ["Hung-I Wang <whygowe@gmail.com>", "PWall <git@pwall.me>"]
 edition = "2018"
 name = "json2pyi"
 version = "0.1.0"
