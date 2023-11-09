@@ -27,6 +27,12 @@ struct InferrerClosure {
     arena: TypeArena,
 }
 
+impl Default for InferrerClosure {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InferrerClosure {
     fn new() -> Self {
         let arena = TypeArena::new();
