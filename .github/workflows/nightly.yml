@@ -49,7 +49,7 @@ jobs:
         uses: ietf-tools/semver-action@v1
         with:
           token: ${{ github.token }}
-          branch: main
+          branch: dev
           noVersionBumpBehavior: current
           skipInvalidTags: true
       - name: Replace version
