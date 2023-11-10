@@ -1,8 +1,7 @@
 use itertools::Itertools;
 use std::{
     convert::TryFrom,
-    env,
-    io::{self, Read},
+    io::{stdin, Read},
 };
 
 use anyhow::Result;
@@ -30,14 +29,14 @@ fn main() -> Result<()> {
     let args = CLI::parse();
     let root_name = Some(args.root);
     let mut raw_data = String::new();
-    io::stdin().read_to_string(&mut raw_data)?;
+    stdin().read_to_string(&mut raw_data)?;
     if args.mult {
         let schemas: JSONSchemaMap = serde_json::from_str(&raw_data).unwrap();
         let schema = infer_mult_from_json_schema(&schemas, root_name)?;
         generate(schema);
         return Ok(());
     }
-    let json = Schema::try_from(raw_data.to_owned())?;
+    let json = Schema::try_from(raw_data)?;
     let schema = infer_from_json_schema(&json, root_name)?;
     generate(schema);
     Ok(())
