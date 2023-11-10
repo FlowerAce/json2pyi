@@ -55,7 +55,7 @@ jobs:
       - name: Replace version
         if: steps.semver.outputs.next != steps.semver.outputs.current
         run: |
-          sed -i 's/\(version = \)".*"/\1 "$next"/' Cargo.toml
+          sed -i "s/^\(version = \)\".*\"$/\1\"$next\"/" Cargo.toml
         env:
           next: ${{ steps.semver.outputs.nextStrict }}
           major: ${{ steps.semver.outputs.nextMajorStrict }}
@@ -70,7 +70,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: semver
-    if: needs.bump.outputs.current != needs.bump.outputs.next
+    if: needs.semver.outputs.current != needs.semver.outputs.next
     steps:
       - name: Download a single artifact
         uses: actions/download-artifact@v3
