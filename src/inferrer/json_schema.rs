@@ -1,9 +1,12 @@
+use std::collections::BTreeMap;
+
 /// Infer a schema from a given JSONSchemaValue
 use indexmap::IndexMap;
 use inflector::Inflector;
+use serde::Deserialize;
 use serde_json_schema::{
     property::{Property, PropertyInstance},
-    Schema as JSONSchema,
+    Schema as JSONSchema, TryFrom,
 };
 
 use crate::schema::{ArenaIndex, ITypeArena, Map, NameHints, Schema, Type, TypeArena};
@@ -17,6 +20,18 @@ pub enum JSONSchemaError {
     Empty,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct JSONSchemaMap(BTreeMap<String, String>);
+
+pub fn infer_mult(schemas: &JSONSchemaMap, root_name: Option<String>) -> Result<Schema> {
+    let mut closure = InferrerClosure::new();
+    for (key, value) in schemas.0.iter() {
+        let schema = JSONSchema::try_from(value.as_ref())?;
+        closure.insert(schema, key)?;
+    }
+    closure.collect(root_name)
+}
+
 /// Infer a `Schema` from a `JSONSchema`
 pub fn infer(json: &JSONSchema, root_name: Option<String>) -> Result<Schema> {
     InferrerClosure::new().run(json, root_name)
@@ -25,6 +40,7 @@ pub fn infer(json: &JSONSchema, root_name: Option<String>) -> Result<Schema> {
 /// An closure for the inferrer to work
 struct InferrerClosure {
     arena: TypeArena,
+    roots: IndexMap<String, ArenaIndex>,
 }
 
 impl Default for InferrerClosure {
@@ -34,15 +50,36 @@ impl Default for InferrerClosure {
 }
 
 impl InferrerClosure {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let arena = TypeArena::new();
-        InferrerClosure { arena }
+        let roots = IndexMap::new();
+        InferrerClosure { arena, roots }
     }
 
     fn run(mut self, schema: &JSONSchema, root_name: Option<String>) -> Result<Schema> {
         let json = schema.specification().ok_or(JSONSchemaError::Empty)?;
-        let root = self.rinfer(&json, root_name, schema);
+        let root = self.rinfer(json, root_name, schema);
+        let arena = self.arena;
+        Ok(Schema { arena, root })
+    }
 
+    pub fn insert(&mut self, schema: JSONSchema, outer_name: &String) -> Result<()> {
+        let Some(json) = schema.specification() else {
+            return Ok(());
+        };
+        let root = self.rinfer(json, Some(outer_name.to_string()), &schema);
+        self.roots.insert(outer_name.to_string(), root);
+        Ok(())
+    }
+
+    pub fn collect(mut self, outer_name: Option<String>) -> Result<Schema> {
+        let fields = self.roots;
+        let mut name_hints = NameHints::new();
+        if let Some(outer_name) = outer_name {
+            name_hints.insert(outer_name);
+        }
+        let root_type = Type::Map(Map { name_hints, fields });
+        let root = self.arena.insert(root_type);
         let arena = self.arena;
         Ok(Schema { arena, root })
     }
@@ -79,7 +116,7 @@ impl InferrerClosure {
                 }
                 let mut name_hints = NameHints::new();
                 if let Some(outer_name) = outer_name {
-                    name_hints.insert(outer_name);
+                    name_hints.insert(outer_name + "Type");
                 }
                 self.arena.insert(Type::Map(Map { name_hints, fields }))
             }

@@ -8,16 +8,24 @@ use std::{
 use anyhow::Result;
 use json2pyi::{
     inferrer::*,
+    schema::Schema as PySchema,
     target::{GenOutput, Indentation, PythonClass, PythonKind, TargetGenerator},
 };
 use serde_json_schema::Schema;
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
-    let mut buffer = String::new();
-    io::stdin().read_to_string(&mut buffer)?;
     let root_name = Some(args[1].to_owned());
-    let json = Schema::try_from(buffer.to_owned())?;
+    let second_param = args[2].to_owned();
+    let mut raw_data = String::new();
+    io::stdin().read_to_string(&mut raw_data)?;
+    if second_param == "--mult" {
+        let schemas: JSONSchemaMap = serde_json::from_str(&raw_data).unwrap();
+        let schema = infer_mult_from_json_schema(&schemas, root_name)?;
+        generate(schema);
+        return Ok(());
+    }
+    let json = Schema::try_from(raw_data.to_owned())?;
     let schema = infer_from_json_schema(&json, root_name)?;
     generate(schema);
     Ok(())
