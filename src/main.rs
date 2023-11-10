@@ -13,13 +13,25 @@ use json2pyi::{
 };
 use serde_json_schema::Schema;
 
+use clap::Parser;
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct CLI {
+    /// Name of the root type
+    root: String,
+
+    /// Send multiple schemas to parse
+    #[arg(long)]
+    mult: bool,
+}
+
 fn main() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
-    let root_name = Some(args[1].to_owned());
-    let second_param = args[2].to_owned();
+    let args = CLI::parse();
+    let root_name = Some(args.root);
     let mut raw_data = String::new();
     io::stdin().read_to_string(&mut raw_data)?;
-    if second_param == "--mult" {
+    if args.mult {
         let schemas: JSONSchemaMap = serde_json::from_str(&raw_data).unwrap();
         let schema = infer_mult_from_json_schema(&schemas, root_name)?;
         generate(schema);
