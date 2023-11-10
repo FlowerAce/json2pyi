@@ -1,0 +1,94 @@
+name: Build
+
+on:
+  push:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
+        cargo --version
+        cargo build --verbose
+    - name: Test
+      run: cargo test --verbose
+    - name: Clippy
+      run: cargo clippy --verbose
+    - name: Check Format
+      run: cargo fmt -- --check
+    - name: Build release
+      run: cargo build --release
+    - name: Upload artificat
+      uses: actions/upload-artifact@v3
+      with:
+        name: debug-build
+        path: target/debug/json2pyi
+    - name: Upload artificat
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-build
+        path: target/release/json2pyi
+
+  semver:
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      next: ${{ steps.semver.outputs.next }}
+      current: ${{ steps.semver.outputs.current }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Get Next Version
+        id: semver
+        uses: ietf-tools/semver-action@v1
+        with:
+          token: ${{ github.token }}
+          branch: main
+          noVersionBumpBehavior: current
+          skipInvalidTags: true
+      - name: Replace version
+        if: steps.semver.outputs.next != steps.semver.outputs.current
+        run: |
+          sed -i 's/\(version = \)".*"/\1 "$next"/' Cargo.toml
+        env:
+          next: ${{ steps.semver.outputs.nextStrict }}
+          major: ${{ steps.semver.outputs.nextMajorStrict }}
+      - name: Push new version to repo
+        if: steps.semver.outputs.next != steps.semver.outputs.current
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore: bump version to ${{ steps.semver.outputs.next }}"
+          file_pattern: "Cargo.toml"
+          tagging_message: ${{ steps.semver.outputs.next }}
+
+  release:
+    runs-on: ubuntu-latest
+    needs: semver
+    if: needs.bump.outputs.current != needs.bump.outputs.next
+    steps:
+      - name: Download a single artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: release-build
+      - name: Get CHANGELOG
+        id: changelog
+        uses: requarks/changelog-action@v1.8.1
+        with:
+          token: ${{ github.token }}
+          tag: ${{ needs.semver.outputs.next }}
+          writeToFile: false
+          excludeTypes: chore,ci,build,docs,style
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./json2pyi
+          tag_name: ${{ needs.semver.outputs.next }}
+          body: |
+            ![Release downloads](https://img.shields.io/github/downloads/FlowerAce/json2pyi/${{ needs.semver.outputs.next }}/total)
+            ${{ steps.changelog.outputs.changes }}
