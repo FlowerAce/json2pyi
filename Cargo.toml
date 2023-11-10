@@ -2,7 +2,7 @@
 authors = ["Hung-I Wang <whygowe@gmail.com>", "PWall <git@pwall.me>"]
 edition = "2018"
 name = "json2pyi"
-version = "0.1.0"
+version = "0.2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
