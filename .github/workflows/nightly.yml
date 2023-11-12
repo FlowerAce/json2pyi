@@ -72,7 +72,7 @@ jobs:
     needs: semver
     if: needs.semver.outputs.current != needs.semver.outputs.next
     steps:
-      - name: Download a single artifact
+      - name: Download release binary
         uses: actions/download-artifact@v3
         with:
           name: release-build
